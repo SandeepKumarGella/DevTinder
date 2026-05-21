@@ -1,22 +1,27 @@
-const { adminAuth, userAuth } = require("./middlewares/auth");
 const express = require("express");
-
+const connectDB = require("./config/database");
+const User = require("./models/user");
 const app = express();
 
-app.get("/admin/getAdminData", adminAuth, (req, res) => {
-  //throw new error();
-  res.send("Received all Admin details successfully!");
+app.post("/signup", async (req, res) => {
+  const userObj = {
+    firstName: "Sandeep",
+    lastName: "Gella",
+    emailId: "Sandeep@gmail.com",
+    password: "Sandeep@6",
+    age: 25,
+    gender: "male",
+  };
+  //creating user model instance for database
+  const user = new User(userObj);
+  await user.save();
+  res.status(200).send("User Saved Successfully!!");
 });
-
-app.get("/user/getUserData", userAuth, (req, res) => {
-  res.send("Received all user details successfully!");
-});
-
-app.use("/", (err, req, res, next) => {
-  if (err) {
-    res.send("Something went wrong please contact admin team!");
-  }
-});
-app.listen(7777, () => {
-  console.log("server running successfully!");
-});
+connectDB()
+  .then(() => {
+    console.log("Database connected Successfully!");
+    app.listen(7777, () => {
+      console.log("server upon running");
+    });
+  })
+  .catch((err) => console.log("database not connected", err));
