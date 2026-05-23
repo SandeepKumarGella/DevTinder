@@ -2,33 +2,46 @@ const express = require("express");
 const connectDB = require("./config/database");
 const User = require("./models/user");
 const app = express();
+const bcrypt = require("bcrypt");
 
 app.use(express.json());
 
 app.post("/signup", async (req, res) => {
   const userObj = req.body;
-  // const userObj = {
-  //   firstName: "Sandeep",
-  //   lastName: "Gella",
-  //   emailId: "Sandeep@gmail.com",
-  //   password: "Sandeep@6",
-  //   age: 25,
-  //   gender: "male",
-  // };
+  const { firstName, lastName, emailId, password } = userObj;
+  const strongPassword = await bcrypt.hash(password, 10);
+
   //creating user model instance for database
   try {
-    const userEmail = req.body.emailId;
-    const userDetails = await User.find({});
-    console.log("userDetails", userDetails);
-    if (userEmail.include(userDetails)) {
-      res.send("Email is already exist in our Database");
-    } else {
-      const user = new User(userObj);
-      await user.save();
-    }
+    const user = new User({
+      firstName,
+      lastName,
+      emailId,
+      password: strongPassword,
+    });
+    await user.save();
     res.status(200).send("User Saved Successfully!!");
   } catch (err) {
     res.status(400).send("Please Enter Valid details" + err.message);
+  }
+});
+
+app.post("/login", async (req, res) => {
+  try {
+    const { emailId, password } = req.body;
+    const userDetails = await User.findOne({ emailId: emailId });
+    if (!userDetails) {
+      res.send("Invalid entry");
+    } else {
+      const validDetails = await bcrypt.compare(password, userDetails.password);
+      if (validDetails) {
+        res.send("Login Successfully");
+      } else {
+        res.send("Invalid Credentails");
+      }
+    }
+  } catch (err) {
+    res.send(400).send("Invalid Credentails" + err.message);
   }
 });
 
