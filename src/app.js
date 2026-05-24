@@ -38,7 +38,9 @@ app.post("/login", async (req, res) => {
     } else {
       const validDetails = await bcrypt.compare(password, userDetails.password);
       if (validDetails) {
-        const token = jwt.sign({ _id: userDetails._id }, "Sandeepgella@2026");
+        const token = jwt.sign({ _id: userDetails._id }, "Sandeepgella@2026", {
+          expiresIn: "0d",
+        });
         res.cookie("jwt", token);
         res.send("Login Successfully");
       } else {
