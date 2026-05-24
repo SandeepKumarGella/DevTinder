@@ -3,8 +3,11 @@ const connectDB = require("./config/database");
 const User = require("./models/user");
 const app = express();
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const cookieParser = require("cookie-parser");
 
 app.use(express.json());
+app.use(cookieParser());
 
 app.post("/signup", async (req, res) => {
   const userObj = req.body;
@@ -35,6 +38,8 @@ app.post("/login", async (req, res) => {
     } else {
       const validDetails = await bcrypt.compare(password, userDetails.password);
       if (validDetails) {
+        const token = jwt.sign({ _id: userDetails._id }, "Sandeepgella@2026");
+        res.cookie("jwt", token);
         res.send("Login Successfully");
       } else {
         res.send("Invalid Credentails");
@@ -42,6 +47,27 @@ app.post("/login", async (req, res) => {
     }
   } catch (err) {
     res.send(400).send("Invalid Credentails" + err.message);
+  }
+});
+
+app.get("/profile/:id", async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const user = await User.find({ _id: userId });
+    const cookie = req.cookies;
+    if (!user) {
+      res.send("Invalid details");
+    }
+    const validUser = await jwt.verify(cookie.jwt, "Sandeepgella@2026");
+    if (validUser) {
+      res.send(user);
+    } else {
+      res.send("Token is matching...");
+    }
+  } catch (err) {
+    res
+      .status(400)
+      .send("unable to get the user profile details" + err.message);
   }
 });
 
